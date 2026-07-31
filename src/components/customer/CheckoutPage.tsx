@@ -1,16 +1,13 @@
-import { useState, useEffect, lazy, Suspense, FormEvent } from 'react';
+import { useState, useEffect, FormEvent } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { supabase } from '../../lib/supabase';
 import { useCart } from '../../context/CartContext';
 import { useSettings } from '../../hooks/useSettings';
 import { useAuth } from '../../context/AuthContext';
 import { haversineDistanceKm, formatPrice } from '../../lib/utils';
-import { geocodeAddress } from '../../lib/geocode';
 import type { CustomerAddress } from '../../types/database';
 import { ArrowLeft, MapPin, Loader } from 'lucide-react';
 import toast from 'react-hot-toast';
-
-const LocationPickerMap = lazy(() => import('../shared/LocationPickerMap'));
 
 export default function CheckoutPage() {
   const navigate = useNavigate();
@@ -24,14 +21,11 @@ export default function CheckoutPage() {
   });
   const [location, setLocation] = useState<{ lat: number; lng: number } | null>(null);
   const [locating, setLocating] = useState(false);
-  const [geocoding, setGeocoding] = useState(false);
-  const [matchedAddress, setMatchedAddress] = useState('');
   const [distanceError, setDistanceError] = useState('');
   const [placing, setPlacing] = useState(false);
   const [savedAddresses, setSavedAddresses] = useState<CustomerAddress[]>([]);
   const [selectedSavedId, setSelectedSavedId] = useState<string | null>(null);
   const [useNewAddress, setUseNewAddress] = useState(false);
-  const [showMapPicker, setShowMapPicker] = useState(false);
 
   useEffect(() => {
     async function loadSavedAddresses() {
@@ -56,9 +50,8 @@ export default function CheckoutPage() {
   const radiusKm = settings?.delivery_radius_km != null ? Number(settings.delivery_radius_km) : 5;
   const radiusEnforced = !!settings?.enforce_delivery_radius && storeLat != null && storeLng != null;
 
-  function applyLocation(lat: number, lng: number, source: 'GPS' | 'address', displayName?: string) {
+  function applyLocation(lat: number, lng: number) {
     setLocation({ lat, lng });
-    setMatchedAddress(source === 'address' ? displayName ?? '' : '');
 
     if (radiusEnforced && storeLat != null && storeLng != null) {
       const dist = haversineDistanceKm(lat, lng, storeLat, storeLng);
@@ -80,14 +73,13 @@ export default function CheckoutPage() {
     setSelectedSavedId(addr.id);
     setUseNewAddress(false);
     setForm((f) => ({ ...f, address: addr.address_text }));
-    applyLocation(addr.latitude, addr.longitude, 'address');
+    applyLocation(addr.latitude, addr.longitude);
   }
 
   function switchToNewAddress() {
     setUseNewAddress(true);
     setSelectedSavedId(null);
     setLocation(null);
-    setMatchedAddress('');
     setDistanceError('');
     setForm((f) => ({ ...f, address: '' }));
   }
@@ -100,40 +92,14 @@ export default function CheckoutPage() {
     setLocating(true);
     navigator.geolocation.getCurrentPosition(
       (pos) => {
-        applyLocation(pos.coords.latitude, pos.coords.longitude, 'GPS');
+        applyLocation(pos.coords.latitude, pos.coords.longitude);
         setLocating(false);
       },
       () => {
-        toast.error('Could not get your location. Please enter address manually.');
+        toast.error('Could not get your location. Please try again.');
         setLocating(false);
       },
     );
-  }
-
-  async function useAddressLocation() {
-    if (!form.address.trim()) {
-      toast.error('Please enter your address first.');
-      return;
-    }
-    setGeocoding(true);
-    try {
-      const result = await geocodeAddress(form.address);
-      if (!result) {
-        setLocation(null);
-        setMatchedAddress('');
-        setDistanceError('');
-        toast.error('Could not find that address. Add more detail, or use GPS location instead.');
-        return;
-      }
-      applyLocation(result.lat, result.lng, 'address', result.displayName);
-    } catch {
-      setLocation(null);
-      setMatchedAddress('');
-      setDistanceError('');
-      toast.error('Address lookup failed. Please try again or use GPS location.');
-    } finally {
-      setGeocoding(false);
-    }
   }
 
   async function handlePlaceOrder(e: FormEvent) {
@@ -259,14 +225,14 @@ export default function CheckoutPage() {
                   </button>
                 ))}
                 {selectedSavedId && distanceError && (
-                  <div className="bg-red-50 border border-red-200 rounded-xl p-3 text-sm text-red-700 font-medium">
+                  <div className="bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-xl p-3 text-sm text-red-700 dark:text-red-400 font-medium">
                     {distanceError}
                   </div>
                 )}
                 <button
                   type="button"
                   onClick={switchToNewAddress}
-                  className="w-full text-center text-sm text-green-700 font-semibold hover:underline py-1"
+                  className="w-full text-center text-sm text-green-700 dark:text-green-400 font-semibold hover:underline py-1"
                 >
                   + Use a different address for this order
                 </button>
@@ -277,7 +243,7 @@ export default function CheckoutPage() {
                   <button
                     type="button"
                     onClick={() => setUseNewAddress(false)}
-                    className="text-xs text-gray-500 hover:underline"
+                    className="text-xs text-gray-500 dark:text-gray-400 hover:underline"
                   >
                     ← Back to saved addresses
                   </button>
@@ -297,7 +263,7 @@ export default function CheckoutPage() {
                   type="button"
                   onClick={useMyLocation}
                   disabled={locating}
-                  className="w-full flex items-center justify-center gap-2 border border-green-300 text-green-700 font-semibold py-2.5 rounded-xl text-sm hover:bg-green-50 disabled:opacity-60 transition-colors"
+                  className="w-full flex items-center justify-center gap-2 border border-green-300 dark:border-green-700 text-green-700 dark:text-green-400 font-semibold py-2.5 rounded-xl text-sm hover:bg-green-50 dark:hover:bg-green-900/30 disabled:opacity-60 transition-colors"
                 >
                   {locating ? (
                     <Loader className="w-4 h-4 animate-spin" />
@@ -312,38 +278,18 @@ export default function CheckoutPage() {
                     ? 'Use My Current Location *'
                     : 'Use My Current Location'}
                 </button>
-                <button
-                  type="button"
-                  onClick={useAddressLocation}
-                  disabled={geocoding || !form.address.trim()}
-                  className="w-full flex items-center justify-center gap-2 text-xs font-semibold text-gray-500 hover:text-green-700 disabled:opacity-50 transition-colors"
-                >
-                  {geocoding && <Loader className="w-3.5 h-3.5 animate-spin" />}
-                  {geocoding ? 'Looking up address…' : 'Or check delivery availability using the address above'}
-                </button>
-                <button
-                  type="button"
-                  onClick={() => setShowMapPicker(true)}
-                  className="w-full flex items-center justify-center gap-2 text-xs font-semibold text-gray-500 hover:text-green-700 transition-colors"
-                >
-                  <MapPin className="w-3.5 h-3.5" />
-                  Or pin your exact location on a map
-                </button>
                 {location && (
-                  <p className="text-xs text-gray-400 text-center">
+                  <p className="text-xs text-gray-400 dark:text-gray-500 text-center">
                     {location.lat.toFixed(5)}, {location.lng.toFixed(5)}
                   </p>
                 )}
-                {matchedAddress && (
-                  <p className="text-xs text-gray-400 text-center">Matched to: {matchedAddress}</p>
-                )}
                 {radiusEnforced && !location && !distanceError && (
-                  <p className="text-xs text-gray-500 text-center">
+                  <p className="text-xs text-gray-500 dark:text-gray-400 text-center">
                     Location is required so we can confirm we deliver to your area.
                   </p>
                 )}
                 {distanceError && (
-                  <div className="bg-red-50 border border-red-200 rounded-xl p-3 text-sm text-red-700 font-medium">
+                  <div className="bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-xl p-3 text-sm text-red-700 dark:text-red-400 font-medium">
                     {distanceError}
                   </div>
                 )}
@@ -381,20 +327,6 @@ export default function CheckoutPage() {
           </div>
         </form>
       </div>
-
-      {showMapPicker && (
-        <Suspense fallback={null}>
-          <LocationPickerMap
-            initialLat={location?.lat ?? storeLat ?? undefined}
-            initialLng={location?.lng ?? storeLng ?? undefined}
-            onConfirm={(lat, lng) => {
-              applyLocation(lat, lng, 'address');
-              setShowMapPicker(false);
-            }}
-            onCancel={() => setShowMapPicker(false)}
-          />
-        </Suspense>
-      )}
     </div>
   );
 }
