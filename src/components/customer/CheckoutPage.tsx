@@ -83,11 +83,17 @@ export default function CheckoutPage() {
     try {
       const result = await geocodeAddress(form.address);
       if (!result) {
+        setLocation(null);
+        setMatchedAddress('');
+        setDistanceError('');
         toast.error('Could not find that address. Add more detail, or use GPS location instead.');
         return;
       }
       applyLocation(result.lat, result.lng, 'address', result.displayName);
     } catch {
+      setLocation(null);
+      setMatchedAddress('');
+      setDistanceError('');
       toast.error('Address lookup failed. Please try again or use GPS location.');
     } finally {
       setGeocoding(false);
