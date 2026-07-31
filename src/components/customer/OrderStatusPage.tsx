@@ -19,11 +19,11 @@ const STEPS = [
 function StatusTimeline({ status }: { status: string }) {
   if (status === 'rejected') {
     return (
-      <div className="flex items-center gap-3 bg-red-50 rounded-2xl p-4">
+      <div className="flex items-center gap-3 bg-red-50 dark:bg-red-900/20 rounded-2xl p-4">
         <XCircle className="w-8 h-8 text-red-500 flex-shrink-0" />
         <div>
-          <p className="font-semibold text-red-700">Order Rejected</p>
-          <p className="text-xs text-red-500 mt-0.5">Please contact the store for more info.</p>
+          <p className="font-semibold text-red-700 dark:text-red-400">Order Rejected</p>
+          <p className="text-xs text-red-500 dark:text-red-400 mt-0.5">Please contact the store for more info.</p>
         </div>
       </div>
     );
@@ -47,28 +47,28 @@ function StatusTimeline({ status }: { status: string }) {
                   isCompleted
                     ? 'bg-green-500'
                     : isCurrent
-                    ? 'bg-green-600 ring-4 ring-green-100'
-                    : 'bg-gray-100'
+                    ? 'bg-green-600 ring-4 ring-green-100 dark:ring-green-900/40'
+                    : 'bg-gray-100 dark:bg-gray-700'
                 }`}
               >
                 <Icon
-                  className={`w-4 h-4 ${isCompleted || isCurrent ? 'text-white' : 'text-gray-400'}`}
+                  className={`w-4 h-4 ${isCompleted || isCurrent ? 'text-white' : 'text-gray-400 dark:text-gray-500'}`}
                 />
               </div>
               {idx < STEPS.length - 1 && (
-                <div className={`w-0.5 h-6 mt-1 ${isCompleted ? 'bg-green-500' : 'bg-gray-200'}`} />
+                <div className={`w-0.5 h-6 mt-1 ${isCompleted ? 'bg-green-500' : 'bg-gray-200 dark:bg-gray-700'}`} />
               )}
             </div>
             <div className="pt-1.5">
               <p
                 className={`text-sm font-semibold ${
-                  isCurrent ? 'text-green-700' : isCompleted ? 'text-gray-700' : 'text-gray-300'
+                  isCurrent ? 'text-green-700 dark:text-green-400' : isCompleted ? 'text-gray-700 dark:text-gray-300' : 'text-gray-300 dark:text-gray-600'
                 }`}
               >
                 {step.label}
               </p>
               {isCurrent && (
-                <p className="text-xs text-gray-500 mt-0.5">
+                <p className="text-xs text-gray-500 dark:text-gray-400 mt-0.5">
                   {status === 'pending' ? 'Waiting for store confirmation' : ''}
                   {status === 'accepted' ? 'Your order has been accepted!' : ''}
                   {status === 'preparing' ? 'Your order is being prepared' : ''}
@@ -136,10 +136,10 @@ export default function OrderStatusPage() {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+      <div className="min-h-screen bg-gray-50 dark:bg-gray-900 flex items-center justify-center">
         <div className="text-center space-y-3">
           <div className="w-12 h-12 border-4 border-green-600 border-t-transparent rounded-full animate-spin mx-auto" />
-          <p className="text-gray-500 text-sm">Loading order…</p>
+          <p className="text-gray-500 dark:text-gray-400 text-sm">Loading order…</p>
         </div>
       </div>
     );
@@ -147,10 +147,10 @@ export default function OrderStatusPage() {
 
   if (notFound || !order) {
     return (
-      <div className="min-h-screen bg-gray-50 flex flex-col items-center justify-center p-4 text-center">
+      <div className="min-h-screen bg-gray-50 dark:bg-gray-900 flex flex-col items-center justify-center p-4 text-center">
         <XCircle className="w-16 h-16 text-red-400 mb-4" />
-        <h2 className="text-xl font-bold text-gray-900">Order Not Found</h2>
-        <p className="text-gray-500 text-sm mt-2">We couldn't find this order.</p>
+        <h2 className="text-xl font-bold text-gray-900 dark:text-gray-100">Order Not Found</h2>
+        <p className="text-gray-500 dark:text-gray-400 text-sm mt-2">We couldn't find this order.</p>
         <button onClick={() => navigate('/')} className="mt-4 bg-green-600 text-white px-6 py-2.5 rounded-xl text-sm font-semibold hover:bg-green-700">
           Go Home
         </button>
@@ -159,16 +159,16 @@ export default function OrderStatusPage() {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50 pb-8">
-      <header className="sticky top-0 z-10 bg-white border-b border-gray-100 px-4 py-3 flex items-center gap-3">
-        <button onClick={() => navigate('/')} className="text-gray-600 hover:text-gray-900">
+    <div className="min-h-screen bg-gray-50 dark:bg-gray-900 pb-8">
+      <header className="sticky top-0 z-10 bg-white dark:bg-gray-800 border-b border-gray-100 dark:border-gray-700 px-4 py-3 flex items-center gap-3">
+        <button onClick={() => navigate('/')} className="text-gray-600 dark:text-gray-300 hover:text-gray-900 dark:hover:text-gray-100">
           <ArrowLeft className="w-5 h-5" />
         </button>
         <div className="flex items-center gap-2">
           <div className="w-7 h-7 bg-green-600 rounded-xl flex items-center justify-center">
             <Leaf className="w-3.5 h-3.5 text-white" />
           </div>
-          <h1 className="font-bold text-gray-900 text-sm">{settings?.store_name ?? 'Fresh Veggies'}</h1>
+          <h1 className="font-bold text-gray-900 dark:text-gray-100 text-sm">{settings?.store_name ?? 'Fresh Veggies'}</h1>
         </div>
       </header>
 
@@ -186,38 +186,38 @@ export default function OrderStatusPage() {
         </div>
 
         {/* Timeline */}
-        <div className="bg-white rounded-2xl p-4 shadow-sm border border-gray-100">
-          <h2 className="font-semibold text-gray-900 mb-4">Order Status</h2>
+        <div className="bg-white dark:bg-gray-800 rounded-2xl p-4 shadow-sm border border-gray-100 dark:border-gray-700">
+          <h2 className="font-semibold text-gray-900 dark:text-gray-100 mb-4">Order Status</h2>
           <StatusTimeline status={order.status} />
         </div>
 
         {/* Items */}
-        <div className="bg-white rounded-2xl p-4 shadow-sm border border-gray-100">
-          <h2 className="font-semibold text-gray-900 mb-3">Your Items</h2>
+        <div className="bg-white dark:bg-gray-800 rounded-2xl p-4 shadow-sm border border-gray-100 dark:border-gray-700">
+          <h2 className="font-semibold text-gray-900 dark:text-gray-100 mb-3">Your Items</h2>
           <div className="space-y-2">
             {order.order_items.map((item) => (
               <div key={item.id} className="flex justify-between text-sm">
-                <span className="text-gray-600">
+                <span className="text-gray-600 dark:text-gray-300">
                   {item.vegetable_name} × {item.quantity} {item.vegetable_unit}
                 </span>
-                <span className="font-semibold text-gray-900">{formatPrice(item.subtotal)}</span>
+                <span className="font-semibold text-gray-900 dark:text-gray-100">{formatPrice(item.subtotal)}</span>
               </div>
             ))}
-            <div className="border-t border-gray-100 pt-2 flex justify-between font-bold">
-              <span className="text-gray-900">Total</span>
-              <span className="text-green-600">{formatPrice(order.total_amount)}</span>
+            <div className="border-t border-gray-100 dark:border-gray-700 pt-2 flex justify-between font-bold">
+              <span className="text-gray-900 dark:text-gray-100">Total</span>
+              <span className="text-green-600 dark:text-green-400">{formatPrice(order.total_amount)}</span>
             </div>
           </div>
         </div>
 
         {/* Customer info */}
-        <div className="bg-white rounded-2xl p-4 shadow-sm border border-gray-100">
-          <h2 className="font-semibold text-gray-900 mb-3">Delivery Details</h2>
-          <div className="space-y-1 text-sm text-gray-600">
-            <p><span className="font-medium text-gray-900">Name:</span> {order.customer_name}</p>
-            <p><span className="font-medium text-gray-900">Phone:</span> {order.customer_phone}</p>
-            <p><span className="font-medium text-gray-900">Address:</span> {order.delivery_address}</p>
-            <p><span className="font-medium text-gray-900">Placed:</span> {formatDate(order.created_at)}</p>
+        <div className="bg-white dark:bg-gray-800 rounded-2xl p-4 shadow-sm border border-gray-100 dark:border-gray-700">
+          <h2 className="font-semibold text-gray-900 dark:text-gray-100 mb-3">Delivery Details</h2>
+          <div className="space-y-1 text-sm text-gray-600 dark:text-gray-300">
+            <p><span className="font-medium text-gray-900 dark:text-gray-100">Name:</span> {order.customer_name}</p>
+            <p><span className="font-medium text-gray-900 dark:text-gray-100">Phone:</span> {order.customer_phone}</p>
+            <p><span className="font-medium text-gray-900 dark:text-gray-100">Address:</span> {order.delivery_address}</p>
+            <p><span className="font-medium text-gray-900 dark:text-gray-100">Placed:</span> {formatDate(order.created_at)}</p>
           </div>
         </div>
 

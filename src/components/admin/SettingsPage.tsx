@@ -67,11 +67,11 @@ export default function SettingsPage() {
 
     if (settings) {
       const { error } = await supabase.from('settings').update(payload).eq('id', settings.id);
-      if (error) toast.error('Failed to save settings');
+      if (error) { console.error('Failed to save settings:', error); toast.error('Failed to save settings'); }
       else toast.success('Settings saved!');
     } else {
       const { error } = await supabase.from('settings').insert(payload);
-      if (error) toast.error('Failed to save settings');
+      if (error) { console.error('Failed to save settings:', error); toast.error('Failed to save settings'); }
       else toast.success('Settings saved!');
     }
 
@@ -108,33 +108,33 @@ export default function SettingsPage() {
 
   return (
     <div className="space-y-5">
-      <h1 className="text-2xl font-bold text-gray-900">Settings</h1>
+      <h1 className="text-2xl font-bold text-gray-900 dark:text-gray-100">Settings</h1>
 
       {loading ? (
         <SettingsSkeleton />
       ) : (
         <form onSubmit={handleSave} className="space-y-5">
-          <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-5 space-y-4">
-            <h2 className="font-semibold text-gray-900">Store Information</h2>
+          <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-sm border border-gray-100 dark:border-gray-700 p-5 space-y-4">
+            <h2 className="font-semibold text-gray-900 dark:text-gray-100">Store Information</h2>
             {fields.map(({ label, key, type, placeholder }) => (
               <div key={key}>
-                <label className="text-xs font-medium text-gray-600 mb-1 block">{label}</label>
+                <label className="text-xs font-medium text-gray-600 dark:text-gray-400 mb-1 block">{label}</label>
                 <input
                   type={type}
                   value={form[key as keyof typeof form] as string}
                   onChange={(e) => setForm((f) => ({ ...f, [key]: e.target.value }))}
                   placeholder={placeholder}
-                  className="w-full border border-gray-200 rounded-xl px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-green-400"
+                  className="w-full border border-gray-200 dark:border-gray-700 rounded-xl px-3 py-2.5 text-sm bg-white dark:bg-gray-900 text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-green-400"
                 />
               </div>
             ))}
           </div>
 
-          <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-5 space-y-4">
+          <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-sm border border-gray-100 dark:border-gray-700 p-5 space-y-4">
             <div className="flex items-center justify-between gap-3">
               <div>
-                <h2 className="font-semibold text-gray-900">Delivery Area Restriction</h2>
-                <p className="text-xs text-gray-500 mt-0.5">
+                <h2 className="font-semibold text-gray-900 dark:text-gray-100">Delivery Area Restriction</h2>
+                <p className="text-xs text-gray-500 dark:text-gray-400 mt-0.5">
                   {form.enforce_delivery_radius
                     ? `Only customers within ${form.delivery_radius_km || 5} km of the store can place an order.`
                     : 'Off — orders are accepted from any location, distance is not checked.'}
@@ -146,7 +146,7 @@ export default function SettingsPage() {
                 aria-checked={form.enforce_delivery_radius}
                 onClick={() => setForm((f) => ({ ...f, enforce_delivery_radius: !f.enforce_delivery_radius }))}
                 className={`relative inline-flex h-7 w-12 flex-shrink-0 items-center rounded-full transition-colors ${
-                  form.enforce_delivery_radius ? 'bg-green-600' : 'bg-gray-300'
+                  form.enforce_delivery_radius ? 'bg-green-600' : 'bg-gray-300 dark:bg-gray-600'
                 }`}
               >
                 <span
@@ -158,7 +158,7 @@ export default function SettingsPage() {
             </div>
 
             <div className={form.enforce_delivery_radius ? '' : 'opacity-50 pointer-events-none'}>
-              <label className="text-xs font-medium text-gray-600 mb-1 block">Delivery Radius (km)</label>
+              <label className="text-xs font-medium text-gray-600 dark:text-gray-400 mb-1 block">Delivery Radius (km)</label>
               <input
                 type="number"
                 min="0"
@@ -167,50 +167,50 @@ export default function SettingsPage() {
                 onChange={(e) => setForm((f) => ({ ...f, delivery_radius_km: e.target.value }))}
                 placeholder="5"
                 disabled={!form.enforce_delivery_radius}
-                className="w-full border border-gray-200 rounded-xl px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-green-400 disabled:bg-gray-50"
+                className="w-full border border-gray-200 dark:border-gray-700 rounded-xl px-3 py-2.5 text-sm bg-white dark:bg-gray-900 text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-green-400 disabled:bg-gray-50 dark:disabled:bg-gray-800"
               />
             </div>
 
-            <div className="border-t border-gray-100 pt-4 space-y-3">
+            <div className="border-t border-gray-100 dark:border-gray-700 pt-4 space-y-3">
               <div>
-                <h3 className="text-sm font-semibold text-gray-900">Store Location</h3>
-                <p className="text-xs text-gray-500 mt-0.5">
+                <h3 className="text-sm font-semibold text-gray-900 dark:text-gray-100">Store Location</h3>
+                <p className="text-xs text-gray-500 dark:text-gray-400 mt-0.5">
                   Pin the store's exact coordinates — required for distance to be calculated.
                 </p>
               </div>
               <div className="grid grid-cols-2 gap-3">
                 <div>
-                  <label className="text-xs font-medium text-gray-600 mb-1 block">Latitude</label>
+                  <label className="text-xs font-medium text-gray-600 dark:text-gray-400 mb-1 block">Latitude</label>
                   <input
                     type="number"
                     step="any"
                     value={form.latitude}
                     onChange={(e) => setForm((f) => ({ ...f, latitude: e.target.value }))}
                     placeholder="e.g. 13.0827"
-                    className="w-full border border-gray-200 rounded-xl px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-green-400"
+                    className="w-full border border-gray-200 dark:border-gray-700 rounded-xl px-3 py-2.5 text-sm bg-white dark:bg-gray-900 text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-green-400"
                   />
                 </div>
                 <div>
-                  <label className="text-xs font-medium text-gray-600 mb-1 block">Longitude</label>
+                  <label className="text-xs font-medium text-gray-600 dark:text-gray-400 mb-1 block">Longitude</label>
                   <input
                     type="number"
                     step="any"
                     value={form.longitude}
                     onChange={(e) => setForm((f) => ({ ...f, longitude: e.target.value }))}
                     placeholder="e.g. 80.2707"
-                    className="w-full border border-gray-200 rounded-xl px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-green-400"
+                    className="w-full border border-gray-200 dark:border-gray-700 rounded-xl px-3 py-2.5 text-sm bg-white dark:bg-gray-900 text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-green-400"
                   />
                 </div>
               </div>
               <button
                 type="button"
                 onClick={useCurrentLocation}
-                className="w-full border border-green-300 text-green-700 font-semibold py-2.5 rounded-xl text-sm hover:bg-green-50 transition-colors"
+                className="w-full border border-green-300 dark:border-green-700 text-green-700 dark:text-green-400 font-semibold py-2.5 rounded-xl text-sm hover:bg-green-50 dark:hover:bg-green-900/30 transition-colors"
               >
                 Use My Current Location
               </button>
               {form.enforce_delivery_radius && (!form.latitude || !form.longitude) && (
-                <div className="bg-amber-50 border border-amber-200 rounded-xl p-3 text-xs text-amber-700 font-medium">
+                <div className="bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-800 rounded-xl p-3 text-xs text-amber-700 dark:text-amber-400 font-medium">
                   Restriction is ON but store coordinates are not set — until you set them, distance can't be
                   verified and all orders will be accepted.
                 </div>

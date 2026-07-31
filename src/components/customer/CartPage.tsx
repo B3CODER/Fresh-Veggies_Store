@@ -10,12 +10,12 @@ export default function CartPage() {
 
   if (items.length === 0) {
     return (
-      <div className="min-h-screen bg-gray-50 flex flex-col">
-        <header className="bg-white border-b border-gray-100 px-4 py-3 flex items-center gap-3">
-          <button onClick={() => navigate('/')} className="text-gray-600 hover:text-gray-900">
+      <div className="min-h-screen bg-gray-50 dark:bg-gray-900 flex flex-col">
+        <header className="bg-white dark:bg-gray-800 border-b border-gray-100 dark:border-gray-700 px-4 py-3 flex items-center gap-3">
+          <button onClick={() => navigate('/')} className="text-gray-600 dark:text-gray-300 hover:text-gray-900 dark:hover:text-gray-100">
             <ArrowLeft className="w-5 h-5" />
           </button>
-          <h1 className="font-bold text-gray-900">My Cart</h1>
+          <h1 className="font-bold text-gray-900 dark:text-gray-100">My Cart</h1>
         </header>
         <div className="flex-1 flex items-center justify-center">
           <EmptyState
@@ -37,41 +37,41 @@ export default function CartPage() {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50 pb-32">
-      <header className="sticky top-0 z-10 bg-white border-b border-gray-100 px-4 py-3 flex items-center gap-3">
-        <button onClick={() => navigate('/')} className="text-gray-600 hover:text-gray-900">
+    <div className="min-h-screen bg-gray-50 dark:bg-gray-900 pb-32">
+      <header className="sticky top-0 z-10 bg-white dark:bg-gray-800 border-b border-gray-100 dark:border-gray-700 px-4 py-3 flex items-center gap-3">
+        <button onClick={() => navigate('/')} className="text-gray-600 dark:text-gray-300 hover:text-gray-900 dark:hover:text-gray-100">
           <ArrowLeft className="w-5 h-5" />
         </button>
-        <h1 className="font-bold text-gray-900">My Cart</h1>
-        <span className="text-sm text-gray-400">({totalItems} items)</span>
+        <h1 className="font-bold text-gray-900 dark:text-gray-100">My Cart</h1>
+        <span className="text-sm text-gray-400 dark:text-gray-500">({totalItems} items)</span>
       </header>
 
       <div className="max-w-xl mx-auto px-4 pt-4 space-y-3">
         {items.map(({ vegetable, quantity }) => (
-          <div key={vegetable.id} className="bg-white rounded-2xl p-3 flex items-center gap-3 shadow-sm border border-gray-100">
+          <div key={vegetable.id} className="bg-white dark:bg-gray-800 rounded-2xl p-3 flex items-center gap-3 shadow-sm border border-gray-100 dark:border-gray-700">
             <img
               src={vegetable.image_url || 'https://images.pexels.com/photos/1300972/pexels-photo-1300972.jpeg?auto=compress&cs=tinysrgb&w=100'}
               alt={vegetable.name}
               className="w-16 h-16 rounded-xl object-cover flex-shrink-0"
             />
             <div className="flex-1 min-w-0">
-              <h3 className="font-semibold text-gray-900 text-sm truncate">{vegetable.name}</h3>
-              <p className="text-green-600 font-bold text-sm mt-0.5">
+              <h3 className="font-semibold text-gray-900 dark:text-gray-100 text-sm truncate">{vegetable.name}</h3>
+              <p className="text-green-600 dark:text-green-400 font-bold text-sm mt-0.5">
                 {formatPrice(vegetable.price)}/{vegetable.unit}
               </p>
-              <p className="text-xs text-gray-400 mt-0.5">
+              <p className="text-xs text-gray-400 dark:text-gray-500 mt-0.5">
                 Subtotal: {formatPrice(vegetable.price * quantity)}
               </p>
             </div>
             <div className="flex items-center gap-2 flex-shrink-0">
-              <div className="flex items-center gap-1 bg-green-50 rounded-xl p-1">
+              <div className="flex items-center gap-1 bg-green-50 dark:bg-green-900/30 rounded-xl p-1">
                 <button
                   onClick={() => updateQuantity(vegetable.id, quantity - 1)}
-                  className="w-7 h-7 bg-white rounded-lg shadow-sm flex items-center justify-center text-green-700 hover:bg-green-100"
+                  className="w-7 h-7 bg-white dark:bg-gray-700 rounded-lg shadow-sm flex items-center justify-center text-green-700 dark:text-green-400 hover:bg-green-100 dark:hover:bg-gray-600"
                 >
                   <Minus className="w-3 h-3" />
                 </button>
-                <span className="text-sm font-bold text-green-700 w-6 text-center">{quantity}</span>
+                <span className="text-sm font-bold text-green-700 dark:text-green-400 w-6 text-center">{quantity}</span>
                 <button
                   onClick={() => updateQuantity(vegetable.id, quantity + 1)}
                   className="w-7 h-7 bg-green-600 rounded-lg flex items-center justify-center text-white hover:bg-green-700"
@@ -81,7 +81,7 @@ export default function CartPage() {
               </div>
               <button
                 onClick={() => removeItem(vegetable.id)}
-                className="w-7 h-7 text-gray-300 hover:text-red-500 flex items-center justify-center"
+                className="w-7 h-7 text-gray-300 dark:text-gray-600 hover:text-red-500 flex items-center justify-center"
               >
                 <Trash2 className="w-4 h-4" />
               </button>
@@ -90,25 +90,25 @@ export default function CartPage() {
         ))}
 
         {/* Order summary */}
-        <div className="bg-white rounded-2xl p-4 shadow-sm border border-gray-100">
-          <h2 className="font-semibold text-gray-900 mb-3">Order Summary</h2>
+        <div className="bg-white dark:bg-gray-800 rounded-2xl p-4 shadow-sm border border-gray-100 dark:border-gray-700">
+          <h2 className="font-semibold text-gray-900 dark:text-gray-100 mb-3">Order Summary</h2>
           <div className="space-y-2 text-sm">
             {items.map(({ vegetable, quantity }) => (
-              <div key={vegetable.id} className="flex justify-between text-gray-600">
+              <div key={vegetable.id} className="flex justify-between text-gray-600 dark:text-gray-300">
                 <span>{vegetable.name} × {quantity}</span>
                 <span>{formatPrice(vegetable.price * quantity)}</span>
               </div>
             ))}
-            <div className="border-t border-gray-100 pt-2 flex justify-between font-bold text-gray-900">
+            <div className="border-t border-gray-100 dark:border-gray-700 pt-2 flex justify-between font-bold text-gray-900 dark:text-gray-100">
               <span>Total</span>
-              <span className="text-green-600">{formatPrice(totalAmount)}</span>
+              <span className="text-green-600 dark:text-green-400">{formatPrice(totalAmount)}</span>
             </div>
           </div>
         </div>
       </div>
 
       {/* Checkout button */}
-      <div className="fixed bottom-0 left-0 right-0 p-4 bg-white border-t border-gray-100 shadow-up">
+      <div className="fixed bottom-0 left-0 right-0 p-4 bg-white dark:bg-gray-800 border-t border-gray-100 dark:border-gray-700 shadow-up">
         <div className="max-w-xl mx-auto">
           <button
             onClick={() => navigate('/checkout')}

@@ -31,7 +31,10 @@ export default function MyOrdersPage() {
       .select('*, order_items(*)')
       .eq('user_id', user!.id)
       .order('created_at', { ascending: false });
-    if (error) toast.error('Failed to load orders');
+    if (error) {
+      console.error('Failed to load orders:', error);
+      toast.error('Failed to load orders');
+    }
     setOrders((data as OrderWithItems[]) ?? []);
     setLoading(false);
   }
@@ -41,18 +44,20 @@ export default function MyOrdersPage() {
     setCancellingId(orderId);
     const { error } = await supabase.from('orders').update({ status: 'cancelled' }).eq('id', orderId);
     setCancellingId(null);
-    if (error) toast.error('Failed to cancel');
-    else toast.success('Order cancelled');
+    if (error) {
+      console.error('Failed to cancel order:', error);
+      toast.error('Failed to cancel');
+    } else toast.success('Order cancelled');
     loadOrders();
   }
 
   return (
-    <div className="min-h-screen bg-gray-50">
-      <header className="sticky top-0 z-10 bg-white border-b border-gray-100 px-4 py-3 flex items-center gap-3">
-        <button onClick={() => navigate('/')} className="text-gray-600 hover:text-gray-900">
+    <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
+      <header className="sticky top-0 z-10 bg-white dark:bg-gray-800 border-b border-gray-100 dark:border-gray-700 px-4 py-3 flex items-center gap-3">
+        <button onClick={() => navigate('/')} className="text-gray-600 dark:text-gray-300 hover:text-gray-900 dark:hover:text-gray-100">
           <ArrowLeft className="w-5 h-5" />
         </button>
-        <h1 className="font-bold text-gray-900">My Orders</h1>
+        <h1 className="font-bold text-gray-900 dark:text-gray-100">My Orders</h1>
       </header>
 
       <div className="max-w-xl mx-auto px-4 pt-4 pb-8 space-y-3">
@@ -78,11 +83,11 @@ export default function MyOrdersPage() {
           orders.map((order) => {
             const canCancel = order.status === 'pending' || order.status === 'rejected';
             return (
-              <div key={order.id} className="bg-white rounded-2xl p-4 shadow-sm border border-gray-100">
+              <div key={order.id} className="bg-white dark:bg-gray-800 rounded-2xl p-4 shadow-sm border border-gray-100 dark:border-gray-700">
                 <div className="flex items-start justify-between mb-2">
                   <div>
-                    <span className="font-mono text-xs text-gray-400">#{generateOrderShortId(order.id)}</span>
-                    <p className="text-xs text-gray-400 mt-0.5">{formatDate(order.created_at)}</p>
+                    <span className="font-mono text-xs text-gray-400 dark:text-gray-500">#{generateOrderShortId(order.id)}</span>
+                    <p className="text-xs text-gray-400 dark:text-gray-500 mt-0.5">{formatDate(order.created_at)}</p>
                   </div>
                   <span className={`text-xs font-bold px-2 py-1 rounded-full ${getOrderStatusColor(order.status)}`}>
                     {getOrderStatusLabel(order.status)}
@@ -91,19 +96,19 @@ export default function MyOrdersPage() {
                 <div className="space-y-1 mb-3">
                   {order.order_items.map((item) => (
                     <div key={item.id} className="flex justify-between text-sm">
-                      <span className="text-gray-600">
+                      <span className="text-gray-600 dark:text-gray-300">
                         {item.vegetable_name} × {item.quantity} {item.vegetable_unit}
                       </span>
-                      <span className="text-gray-500">{formatPrice(item.subtotal)}</span>
+                      <span className="text-gray-500 dark:text-gray-400">{formatPrice(item.subtotal)}</span>
                     </div>
                   ))}
                 </div>
-                <div className="flex items-center justify-between border-t border-gray-100 pt-2">
-                  <span className="font-bold text-gray-900">{formatPrice(order.total_amount)}</span>
+                <div className="flex items-center justify-between border-t border-gray-100 dark:border-gray-700 pt-2">
+                  <span className="font-bold text-gray-900 dark:text-gray-100">{formatPrice(order.total_amount)}</span>
                   <div className="flex gap-2">
                     <button
                       onClick={() => navigate(`/order/${order.id}`)}
-                      className="text-xs font-semibold text-green-700 bg-green-50 hover:bg-green-100 px-3 py-1.5 rounded-lg transition-colors"
+                      className="text-xs font-semibold text-green-700 dark:text-green-400 bg-green-50 dark:bg-green-900/30 hover:bg-green-100 dark:hover:bg-green-900/50 px-3 py-1.5 rounded-lg transition-colors"
                     >
                       View Details
                     </button>
@@ -111,7 +116,7 @@ export default function MyOrdersPage() {
                       <button
                         onClick={() => handleCancel(order.id)}
                         disabled={cancellingId === order.id}
-                        className="flex items-center gap-1 text-xs font-semibold text-red-600 bg-red-50 hover:bg-red-100 disabled:opacity-50 px-3 py-1.5 rounded-lg transition-colors"
+                        className="flex items-center gap-1 text-xs font-semibold text-red-600 dark:text-red-400 bg-red-50 dark:bg-red-900/30 hover:bg-red-100 dark:hover:bg-red-900/50 disabled:opacity-50 px-3 py-1.5 rounded-lg transition-colors"
                       >
                         <Ban className="w-3 h-3" />
                         {cancellingId === order.id ? '…' : 'Cancel'}

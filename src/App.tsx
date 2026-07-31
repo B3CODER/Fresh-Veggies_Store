@@ -2,6 +2,7 @@ import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import { Toaster } from 'react-hot-toast';
 import { AuthProvider } from './context/AuthContext';
 import { CartProvider } from './context/CartContext';
+import { ThemeProvider } from './context/ThemeContext';
 import ProtectedRoute from './components/ProtectedRoute';
 import CustomerProtectedRoute from './components/CustomerProtectedRoute';
 import AdminLayout from './components/admin/AdminLayout';
@@ -17,10 +18,12 @@ import CartPage from './components/customer/CartPage';
 import CheckoutPage from './components/customer/CheckoutPage';
 import OrderStatusPage from './components/customer/OrderStatusPage';
 import MyOrdersPage from './components/customer/MyOrdersPage';
+import AccountPage from './components/customer/AccountPage';
 
 export default function App() {
   return (
     <BrowserRouter>
+      <ThemeProvider>
       <AuthProvider>
         <CartProvider>
           <Toaster
@@ -77,6 +80,14 @@ export default function App() {
                 </CustomerProtectedRoute>
               }
             />
+            <Route
+              path="/account"
+              element={
+                <CustomerProtectedRoute>
+                  <AccountPage />
+                </CustomerProtectedRoute>
+              }
+            />
 
             {/* Admin routes */}
             <Route path="/admin" element={<AdminLoginPage />} />
@@ -118,6 +129,7 @@ export default function App() {
           </Routes>
         </CartProvider>
       </AuthProvider>
+      </ThemeProvider>
     </BrowserRouter>
   );
 }

@@ -47,60 +47,60 @@ export default function DashboardPage() {
   ];
 
   const statusColors: Record<string, string> = {
-    pending: 'text-yellow-700 bg-yellow-100',
-    accepted: 'text-blue-700 bg-blue-100',
-    preparing: 'text-orange-700 bg-orange-100',
-    completed: 'text-green-700 bg-green-100',
-    rejected: 'text-red-700 bg-red-100',
+    pending: 'text-yellow-700 bg-yellow-100 dark:text-yellow-400 dark:bg-yellow-900/30',
+    accepted: 'text-blue-700 bg-blue-100 dark:text-blue-400 dark:bg-blue-900/30',
+    preparing: 'text-orange-700 bg-orange-100 dark:text-orange-400 dark:bg-orange-900/30',
+    completed: 'text-green-700 bg-green-100 dark:text-green-400 dark:bg-green-900/30',
+    rejected: 'text-red-700 bg-red-100 dark:text-red-400 dark:bg-red-900/30',
   };
 
   return (
     <div className="space-y-6">
-      <h1 className="text-2xl font-bold text-gray-900">Dashboard</h1>
+      <h1 className="text-2xl font-bold text-gray-900 dark:text-gray-100">Dashboard</h1>
 
       {loading ? (
         <div className="grid grid-cols-2 gap-3">
           {Array.from({ length: 4 }).map((_, i) => (
-            <div key={i} className="bg-white rounded-2xl p-4 animate-pulse h-24" />
+            <div key={i} className="bg-white dark:bg-gray-800 rounded-2xl p-4 animate-pulse h-24" />
           ))}
         </div>
       ) : (
         <div className="grid grid-cols-2 gap-3">
           {cards.map(({ label, value, icon: Icon, color }) => (
-            <div key={label} className="bg-white rounded-2xl p-4 shadow-sm border border-gray-100">
+            <div key={label} className="bg-white dark:bg-gray-800 rounded-2xl p-4 shadow-sm border border-gray-100 dark:border-gray-700">
               <div className={`w-9 h-9 ${color} rounded-xl flex items-center justify-center mb-3`}>
                 <Icon className="w-4 h-4 text-white" />
               </div>
-              <div className="text-xl font-bold text-gray-900">{value}</div>
-              <div className="text-xs text-gray-500 mt-0.5">{label}</div>
+              <div className="text-xl font-bold text-gray-900 dark:text-gray-100">{value}</div>
+              <div className="text-xs text-gray-500 dark:text-gray-400 mt-0.5">{label}</div>
             </div>
           ))}
         </div>
       )}
 
-      <div className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
-        <div className="flex items-center justify-between px-4 py-3 border-b border-gray-100">
-          <h2 className="font-semibold text-gray-900 text-sm">Recent Orders</h2>
-          <Link to="/admin/orders" className="text-xs text-green-600 font-medium hover:underline">
+      <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-sm border border-gray-100 dark:border-gray-700 overflow-hidden">
+        <div className="flex items-center justify-between px-4 py-3 border-b border-gray-100 dark:border-gray-700">
+          <h2 className="font-semibold text-gray-900 dark:text-gray-100 text-sm">Recent Orders</h2>
+          <Link to="/admin/orders" className="text-xs text-green-600 dark:text-green-400 font-medium hover:underline">
             View all
           </Link>
         </div>
         {recentOrders.length === 0 ? (
-          <p className="text-center text-gray-400 text-sm py-8">No orders yet</p>
+          <p className="text-center text-gray-400 dark:text-gray-500 text-sm py-8">No orders yet</p>
         ) : (
-          <div className="divide-y divide-gray-50">
+          <div className="divide-y divide-gray-50 dark:divide-gray-700">
             {recentOrders.map((order) => (
               <div key={order.id} className="flex items-center justify-between px-4 py-3">
                 <div>
-                  <p className="text-sm font-medium text-gray-900">{order.customer_name}</p>
-                  <p className="text-xs text-gray-400">{formatDate(order.created_at)}</p>
+                  <p className="text-sm font-medium text-gray-900 dark:text-gray-100">{order.customer_name}</p>
+                  <p className="text-xs text-gray-400 dark:text-gray-500">{formatDate(order.created_at)}</p>
                 </div>
                 <div className="text-right space-y-1">
-                  <p className="text-sm font-semibold text-gray-900">
+                  <p className="text-sm font-semibold text-gray-900 dark:text-gray-100">
                     {formatPrice(order.total_amount)}
                   </p>
                   <span
-                    className={`text-xs font-semibold px-2 py-0.5 rounded-full ${statusColors[order.status] ?? 'text-gray-700 bg-gray-100'}`}
+                    className={`text-xs font-semibold px-2 py-0.5 rounded-full ${statusColors[order.status] ?? 'text-gray-700 bg-gray-100 dark:text-gray-300 dark:bg-gray-700'}`}
                   >
                     {order.status}
                   </span>

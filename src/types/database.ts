@@ -26,6 +26,11 @@ export interface Database {
         Insert: Omit<OrderItem, 'id' | 'created_at'>;
         Update: Partial<Omit<OrderItem, 'id' | 'created_at'>>;
       };
+      customer_addresses: {
+        Row: CustomerAddress;
+        Insert: Omit<CustomerAddress, 'id' | 'created_at' | 'updated_at'>;
+        Update: Partial<Omit<CustomerAddress, 'id' | 'user_id' | 'created_at'>>;
+      };
     };
   };
 }
@@ -96,6 +101,17 @@ export interface OrderItem {
 
 export interface OrderWithItems extends Order {
   order_items: OrderItem[];
+}
+
+export interface CustomerAddress {
+  id: string;
+  user_id: string;
+  label: string;
+  address_text: string;
+  latitude: number;
+  longitude: number;
+  created_at: string;
+  updated_at: string;
 }
 
 export interface CartItem {

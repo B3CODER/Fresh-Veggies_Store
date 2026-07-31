@@ -64,7 +64,10 @@ export default function VegetablesPage() {
       .from('vegetables')
       .select('*')
       .order('created_at', { ascending: false });
-    if (error) toast.error('Failed to load vegetables');
+    if (error) {
+      console.error('Failed to load vegetables:', error);
+      toast.error('Failed to load vegetables');
+    }
     setVegetables(data ?? []);
     setLoading(false);
   }
@@ -103,10 +106,10 @@ export default function VegetablesPage() {
 
     if (editing) {
       const { error } = await supabase.from('vegetables').update(payload).eq('id', editing.id);
-      if (error) { toast.error('Failed to update'); } else { toast.success('Updated!'); }
+      if (error) { console.error('Failed to update vegetable:', error); toast.error('Failed to update'); } else { toast.success('Updated!'); }
     } else {
       const { error } = await supabase.from('vegetables').insert(payload);
-      if (error) { toast.error('Failed to add'); } else { toast.success('Added!'); }
+      if (error) { console.error('Failed to add vegetable:', error); toast.error('Failed to add'); } else { toast.success('Added!'); }
     }
 
     setSaving(false);
@@ -118,8 +121,10 @@ export default function VegetablesPage() {
     if (!confirm('Delete this vegetable?')) return;
     setDeletingId(id);
     const { error } = await supabase.from('vegetables').delete().eq('id', id);
-    if (error) toast.error('Failed to delete');
-    else toast.success('Deleted');
+    if (error) {
+      console.error('Failed to delete vegetable:', error);
+      toast.error('Failed to delete');
+    } else toast.success('Deleted');
     setDeletingId(null);
     loadVegetables();
   }
@@ -129,8 +134,10 @@ export default function VegetablesPage() {
       .from('vegetables')
       .update({ is_available: !v.is_available })
       .eq('id', v.id);
-    if (error) toast.error('Failed to update');
-    else loadVegetables();
+    if (error) {
+      console.error('Failed to toggle availability:', error);
+      toast.error('Failed to update');
+    } else loadVegetables();
   }
 
   const filtered = vegetables.filter((v) =>
@@ -140,7 +147,7 @@ export default function VegetablesPage() {
   return (
     <div className="space-y-5">
       <div className="flex items-center justify-between">
-        <h1 className="text-2xl font-bold text-gray-900">Vegetables</h1>
+        <h1 className="text-2xl font-bold text-gray-900 dark:text-gray-100">Vegetables</h1>
         <button
           onClick={openAdd}
           className="flex items-center gap-1.5 bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-xl text-sm font-semibold transition-colors"
@@ -156,7 +163,7 @@ export default function VegetablesPage() {
           placeholder="Search vegetables…"
           value={search}
           onChange={(e) => setSearch(e.target.value)}
-          className="w-full pl-9 pr-4 py-2.5 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-green-400"
+          className="w-full pl-9 pr-4 py-2.5 border border-gray-200 dark:border-gray-700 rounded-xl text-sm bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-green-400"
         />
       </div>
 
@@ -169,7 +176,7 @@ export default function VegetablesPage() {
       ) : (
         <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
           {filtered.map((v) => (
-            <div key={v.id} className="bg-white rounded-2xl overflow-hidden shadow-sm border border-gray-100">
+            <div key={v.id} className="bg-white dark:bg-gray-800 rounded-2xl overflow-hidden shadow-sm border border-gray-100 dark:border-gray-700">
               <div className="relative">
                 <img
                   src={v.image_url || getDefaultImage(v.name)}
@@ -183,31 +190,31 @@ export default function VegetablesPage() {
                 )}
               </div>
               <div className="p-3">
-                <h3 className="font-semibold text-gray-900 text-sm truncate">{v.name}</h3>
-                <p className="text-green-600 font-bold text-sm mt-0.5">
+                <h3 className="font-semibold text-gray-900 dark:text-gray-100 text-sm truncate">{v.name}</h3>
+                <p className="text-green-600 dark:text-green-400 font-bold text-sm mt-0.5">
                   {formatPrice(v.price)}/{v.unit}
                 </p>
                 {v.quantity_available != null && (
-                  <p className="text-xs text-gray-400 mt-0.5">Stock: {v.quantity_available} {v.unit}</p>
+                  <p className="text-xs text-gray-400 dark:text-gray-500 mt-0.5">Stock: {v.quantity_available} {v.unit}</p>
                 )}
                 <div className="flex items-center gap-2 mt-3">
                   <button
                     onClick={() => toggleAvailability(v)}
                     className={`flex-1 text-xs font-semibold py-1.5 rounded-lg transition-colors ${
                       v.is_available
-                        ? 'bg-green-50 text-green-700 hover:bg-green-100'
-                        : 'bg-red-50 text-red-600 hover:bg-red-100'
+                        ? 'bg-green-50 dark:bg-green-900/30 text-green-700 dark:text-green-400 hover:bg-green-100 dark:hover:bg-green-900/50'
+                        : 'bg-red-50 dark:bg-red-900/30 text-red-600 dark:text-red-400 hover:bg-red-100 dark:hover:bg-red-900/50'
                     }`}
                   >
                     {v.is_available ? 'Available' : 'Unavailable'}
                   </button>
-                  <button onClick={() => openEdit(v)} className="p-1.5 text-gray-400 hover:text-blue-500 transition-colors">
+                  <button onClick={() => openEdit(v)} className="p-1.5 text-gray-400 dark:text-gray-500 hover:text-blue-500 transition-colors">
                     <Pencil className="w-3.5 h-3.5" />
                   </button>
                   <button
                     onClick={() => handleDelete(v.id)}
                     disabled={deletingId === v.id}
-                    className="p-1.5 text-gray-400 hover:text-red-500 transition-colors disabled:opacity-50"
+                    className="p-1.5 text-gray-400 dark:text-gray-500 hover:text-red-500 transition-colors disabled:opacity-50"
                   >
                     <Trash2 className="w-3.5 h-3.5" />
                   </button>
@@ -222,17 +229,17 @@ export default function VegetablesPage() {
       {showModal && (
         <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center p-0 sm:p-4">
           <div className="absolute inset-0 bg-black/40 backdrop-blur-sm" onClick={() => setShowModal(false)} />
-          <div className="relative bg-white w-full sm:max-w-md rounded-t-3xl sm:rounded-3xl shadow-2xl max-h-[90vh] overflow-y-auto">
-            <div className="flex items-center justify-between p-5 border-b border-gray-100 sticky top-0 bg-white rounded-t-3xl">
-              <h2 className="font-bold text-gray-900">{editing ? 'Edit Vegetable' : 'Add Vegetable'}</h2>
-              <button onClick={() => setShowModal(false)} className="text-gray-400 hover:text-gray-600">
+          <div className="relative bg-white dark:bg-gray-800 w-full sm:max-w-md rounded-t-3xl sm:rounded-3xl shadow-2xl max-h-[90vh] overflow-y-auto">
+            <div className="flex items-center justify-between p-5 border-b border-gray-100 dark:border-gray-700 sticky top-0 bg-white dark:bg-gray-800 rounded-t-3xl">
+              <h2 className="font-bold text-gray-900 dark:text-gray-100">{editing ? 'Edit Vegetable' : 'Add Vegetable'}</h2>
+              <button onClick={() => setShowModal(false)} className="text-gray-400 hover:text-gray-600 dark:hover:text-gray-300">
                 <X className="w-5 h-5" />
               </button>
             </div>
             <form onSubmit={handleSave} className="p-5 space-y-4">
               {/* Image preview */}
               <div
-                className="relative h-40 rounded-2xl overflow-hidden bg-gray-100 cursor-pointer group"
+                className="relative h-40 rounded-2xl overflow-hidden bg-gray-100 dark:bg-gray-700 cursor-pointer group"
                 onClick={() => fileRef.current?.click()}
               >
                 <img
@@ -255,28 +262,28 @@ export default function VegetablesPage() {
                 }}
               />
               <div>
-                <label className="text-xs font-medium text-gray-600 mb-1 block">Or paste image URL</label>
+                <label className="text-xs font-medium text-gray-600 dark:text-gray-400 mb-1 block">Or paste image URL</label>
                 <input
                   type="url"
                   placeholder="https://..."
                   value={form.image_url}
                   onChange={(e) => setForm((f) => ({ ...f, image_url: e.target.value }))}
-                  className="w-full border border-gray-200 rounded-xl px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-green-400"
+                  className="w-full border border-gray-200 dark:border-gray-700 rounded-xl px-3 py-2 text-sm bg-white dark:bg-gray-900 text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-green-400"
                 />
               </div>
               <div>
-                <label className="text-xs font-medium text-gray-600 mb-1 block">Name *</label>
+                <label className="text-xs font-medium text-gray-600 dark:text-gray-400 mb-1 block">Name *</label>
                 <input
                   required
                   value={form.name}
                   onChange={(e) => setForm((f) => ({ ...f, name: e.target.value }))}
                   placeholder="e.g. Tomato"
-                  className="w-full border border-gray-200 rounded-xl px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-green-400"
+                  className="w-full border border-gray-200 dark:border-gray-700 rounded-xl px-3 py-2 text-sm bg-white dark:bg-gray-900 text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-green-400"
                 />
               </div>
               <div className="grid grid-cols-2 gap-3">
                 <div>
-                  <label className="text-xs font-medium text-gray-600 mb-1 block">Price (₹) *</label>
+                  <label className="text-xs font-medium text-gray-600 dark:text-gray-400 mb-1 block">Price (₹) *</label>
                   <input
                     required
                     type="number"
@@ -285,15 +292,15 @@ export default function VegetablesPage() {
                     value={form.price}
                     onChange={(e) => setForm((f) => ({ ...f, price: e.target.value }))}
                     placeholder="0.00"
-                    className="w-full border border-gray-200 rounded-xl px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-green-400"
+                    className="w-full border border-gray-200 dark:border-gray-700 rounded-xl px-3 py-2 text-sm bg-white dark:bg-gray-900 text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-green-400"
                   />
                 </div>
                 <div>
-                  <label className="text-xs font-medium text-gray-600 mb-1 block">Unit *</label>
+                  <label className="text-xs font-medium text-gray-600 dark:text-gray-400 mb-1 block">Unit *</label>
                   <select
                     value={form.unit}
                     onChange={(e) => setForm((f) => ({ ...f, unit: e.target.value }))}
-                    className="w-full border border-gray-200 rounded-xl px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-green-400 bg-white"
+                    className="w-full border border-gray-200 dark:border-gray-700 rounded-xl px-3 py-2 text-sm bg-white dark:bg-gray-900 text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-green-400"
                   >
                     {UNITS.map((u) => (
                       <option key={u} value={u}>{u}</option>
@@ -302,7 +309,7 @@ export default function VegetablesPage() {
                 </div>
               </div>
               <div>
-                <label className="text-xs font-medium text-gray-600 mb-1 block">Available Quantity (optional)</label>
+                <label className="text-xs font-medium text-gray-600 dark:text-gray-400 mb-1 block">Available Quantity (optional)</label>
                 <input
                   type="number"
                   min="0"
@@ -310,17 +317,17 @@ export default function VegetablesPage() {
                   value={form.quantity_available}
                   onChange={(e) => setForm((f) => ({ ...f, quantity_available: e.target.value }))}
                   placeholder="Leave blank if unlimited"
-                  className="w-full border border-gray-200 rounded-xl px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-green-400"
+                  className="w-full border border-gray-200 dark:border-gray-700 rounded-xl px-3 py-2 text-sm bg-white dark:bg-gray-900 text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-green-400"
                 />
               </div>
               <label className="flex items-center gap-3 cursor-pointer">
                 <div
                   onClick={() => setForm((f) => ({ ...f, is_available: !f.is_available }))}
-                  className={`relative w-11 h-6 rounded-full transition-colors ${form.is_available ? 'bg-green-500' : 'bg-gray-300'}`}
+                  className={`relative w-11 h-6 rounded-full transition-colors ${form.is_available ? 'bg-green-500' : 'bg-gray-300 dark:bg-gray-600'}`}
                 >
                   <div className={`absolute top-0.5 left-0.5 w-5 h-5 bg-white rounded-full shadow transition-transform ${form.is_available ? 'translate-x-5' : ''}`} />
                 </div>
-                <span className="text-sm font-medium text-gray-700">Mark as Available</span>
+                <span className="text-sm font-medium text-gray-700 dark:text-gray-300">Mark as Available</span>
               </label>
               <button
                 type="submit"

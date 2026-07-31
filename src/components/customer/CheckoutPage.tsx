@@ -1,4 +1,4 @@
-import { useState, FormEvent } from 'react';
+import { useState, useEffect, lazy, Suspense, FormEvent } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { supabase } from '../../lib/supabase';
 import { useCart } from '../../context/CartContext';
@@ -6,8 +6,11 @@ import { useSettings } from '../../hooks/useSettings';
 import { useAuth } from '../../context/AuthContext';
 import { haversineDistanceKm, formatPrice } from '../../lib/utils';
 import { geocodeAddress } from '../../lib/geocode';
+import type { CustomerAddress } from '../../types/database';
 import { ArrowLeft, MapPin, Loader } from 'lucide-react';
 import toast from 'react-hot-toast';
+
+const LocationPickerMap = lazy(() => import('../shared/LocationPickerMap'));
 
 export default function CheckoutPage() {
   const navigate = useNavigate();
@@ -25,6 +28,23 @@ export default function CheckoutPage() {
   const [matchedAddress, setMatchedAddress] = useState('');
   const [distanceError, setDistanceError] = useState('');
   const [placing, setPlacing] = useState(false);
+  const [savedAddresses, setSavedAddresses] = useState<CustomerAddress[]>([]);
+  const [selectedSavedId, setSelectedSavedId] = useState<string | null>(null);
+  const [useNewAddress, setUseNewAddress] = useState(false);
+  const [showMapPicker, setShowMapPicker] = useState(false);
+
+  useEffect(() => {
+    async function loadSavedAddresses() {
+      const { data } = await supabase
+        .from('customer_addresses')
+        .select('*')
+        .order('created_at', { ascending: true });
+      const rows = (data as CustomerAddress[]) ?? [];
+      setSavedAddresses(rows);
+      if (rows.length === 0) setUseNewAddress(true);
+    }
+    loadSavedAddresses();
+  }, []);
 
   if (items.length === 0) {
     navigate('/');
@@ -54,6 +74,22 @@ export default function CheckoutPage() {
       setDistanceError('');
       toast.success('Location captured!');
     }
+  }
+
+  function selectSavedAddress(addr: CustomerAddress) {
+    setSelectedSavedId(addr.id);
+    setUseNewAddress(false);
+    setForm((f) => ({ ...f, address: addr.address_text }));
+    applyLocation(addr.latitude, addr.longitude, 'address');
+  }
+
+  function switchToNewAddress() {
+    setUseNewAddress(true);
+    setSelectedSavedId(null);
+    setLocation(null);
+    setMatchedAddress('');
+    setDistanceError('');
+    setForm((f) => ({ ...f, address: '' }));
   }
 
   function useMyLocation() {
@@ -155,6 +191,7 @@ export default function CheckoutPage() {
       }
 
       clearCart();
+      toast.success('You have successfully ordered!');
       navigate(`/order/${orderData.id}`, { replace: true });
     } catch {
       toast.error('Something went wrong. Please try again.');
@@ -163,123 +200,175 @@ export default function CheckoutPage() {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50 pb-32">
-      <header className="sticky top-0 z-10 bg-white border-b border-gray-100 px-4 py-3 flex items-center gap-3">
-        <button onClick={() => navigate('/cart')} className="text-gray-600 hover:text-gray-900">
+    <div className="min-h-screen bg-gray-50 dark:bg-gray-900 pb-32">
+      <header className="sticky top-0 z-10 bg-white dark:bg-gray-800 border-b border-gray-100 dark:border-gray-700 px-4 py-3 flex items-center gap-3">
+        <button onClick={() => navigate('/cart')} className="text-gray-600 dark:text-gray-300 hover:text-gray-900 dark:hover:text-gray-100">
           <ArrowLeft className="w-5 h-5" />
         </button>
-        <h1 className="font-bold text-gray-900">Checkout</h1>
+        <h1 className="font-bold text-gray-900 dark:text-gray-100">Checkout</h1>
       </header>
 
       <div className="max-w-xl mx-auto px-4 pt-4">
         <form onSubmit={handlePlaceOrder} className="space-y-4">
           {/* Customer details */}
-          <div className="bg-white rounded-2xl p-4 shadow-sm border border-gray-100 space-y-4">
-            <h2 className="font-semibold text-gray-900">Your Details</h2>
+          <div className="bg-white dark:bg-gray-800 rounded-2xl p-4 shadow-sm border border-gray-100 dark:border-gray-700 space-y-4">
+            <h2 className="font-semibold text-gray-900 dark:text-gray-100">Your Details</h2>
             <div>
-              <label className="text-xs font-medium text-gray-600 mb-1 block">Full Name *</label>
+              <label className="text-xs font-medium text-gray-600 dark:text-gray-400 mb-1 block">Full Name *</label>
               <input
                 required
                 type="text"
                 value={form.name}
                 onChange={(e) => setForm((f) => ({ ...f, name: e.target.value }))}
                 placeholder="Enter your name"
-                className="w-full border border-gray-200 rounded-xl px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-green-400"
+                className="w-full border border-gray-200 dark:border-gray-700 rounded-xl px-3 py-2.5 text-sm bg-white dark:bg-gray-900 text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-green-400"
               />
             </div>
             <div>
-              <label className="text-xs font-medium text-gray-600 mb-1 block">Mobile Number *</label>
+              <label className="text-xs font-medium text-gray-600 dark:text-gray-400 mb-1 block">Mobile Number *</label>
               <input
                 required
                 type="tel"
                 value={form.phone}
                 onChange={(e) => setForm((f) => ({ ...f, phone: e.target.value }))}
                 placeholder="+91 98765 43210"
-                className="w-full border border-gray-200 rounded-xl px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-green-400"
+                className="w-full border border-gray-200 dark:border-gray-700 rounded-xl px-3 py-2.5 text-sm bg-white dark:bg-gray-900 text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-green-400"
               />
             </div>
           </div>
 
           {/* Delivery address */}
-          <div className="bg-white rounded-2xl p-4 shadow-sm border border-gray-100 space-y-4">
-            <h2 className="font-semibold text-gray-900">Delivery Address</h2>
-            <div>
-              <label className="text-xs font-medium text-gray-600 mb-1 block">Address *</label>
-              <textarea
-                required
-                rows={3}
-                value={form.address}
-                onChange={(e) => setForm((f) => ({ ...f, address: e.target.value }))}
-                placeholder="House no., Street, Area, City…"
-                className="w-full border border-gray-200 rounded-xl px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-green-400 resize-none"
-              />
-            </div>
-            <button
-              type="button"
-              onClick={useMyLocation}
-              disabled={locating}
-              className="w-full flex items-center justify-center gap-2 border border-green-300 text-green-700 font-semibold py-2.5 rounded-xl text-sm hover:bg-green-50 disabled:opacity-60 transition-colors"
-            >
-              {locating ? (
-                <Loader className="w-4 h-4 animate-spin" />
-              ) : (
-                <MapPin className="w-4 h-4" />
-              )}
-              {locating
-                ? 'Getting location…'
-                : location
-                ? 'Location captured ✓'
-                : radiusEnforced
-                ? 'Use My Current Location *'
-                : 'Use My Current Location'}
-            </button>
-            <button
-              type="button"
-              onClick={useAddressLocation}
-              disabled={geocoding || !form.address.trim()}
-              className="w-full flex items-center justify-center gap-2 text-xs font-semibold text-gray-500 hover:text-green-700 disabled:opacity-50 transition-colors"
-            >
-              {geocoding && <Loader className="w-3.5 h-3.5 animate-spin" />}
-              {geocoding ? 'Looking up address…' : 'Or check delivery availability using the address above'}
-            </button>
-            {location && (
-              <p className="text-xs text-gray-400 text-center">
-                {location.lat.toFixed(5)}, {location.lng.toFixed(5)}
-              </p>
-            )}
-            {matchedAddress && (
-              <p className="text-xs text-gray-400 text-center">Matched to: {matchedAddress}</p>
-            )}
-            {radiusEnforced && !location && !distanceError && (
-              <p className="text-xs text-gray-500 text-center">
-                Location is required so we can confirm we deliver to your area.
-              </p>
-            )}
-            {distanceError && (
-              <div className="bg-red-50 border border-red-200 rounded-xl p-3 text-sm text-red-700 font-medium">
-                {distanceError}
+          <div className="bg-white dark:bg-gray-800 rounded-2xl p-4 shadow-sm border border-gray-100 dark:border-gray-700 space-y-4">
+            <h2 className="font-semibold text-gray-900 dark:text-gray-100">Delivery Address</h2>
+
+            {!useNewAddress && savedAddresses.length > 0 ? (
+              <div className="space-y-2">
+                {savedAddresses.map((addr) => (
+                  <button
+                    key={addr.id}
+                    type="button"
+                    onClick={() => selectSavedAddress(addr)}
+                    className={`w-full text-left p-3 rounded-xl border transition-colors ${
+                      selectedSavedId === addr.id
+                        ? 'border-green-400 bg-green-50 dark:bg-green-900/30'
+                        : 'border-gray-200 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-700'
+                    }`}
+                  >
+                    <p className="text-sm font-semibold text-gray-900 dark:text-gray-100">{addr.label}</p>
+                    <p className="text-xs text-gray-500 dark:text-gray-400 line-clamp-2 mt-0.5">{addr.address_text}</p>
+                  </button>
+                ))}
+                {selectedSavedId && distanceError && (
+                  <div className="bg-red-50 border border-red-200 rounded-xl p-3 text-sm text-red-700 font-medium">
+                    {distanceError}
+                  </div>
+                )}
+                <button
+                  type="button"
+                  onClick={switchToNewAddress}
+                  className="w-full text-center text-sm text-green-700 font-semibold hover:underline py-1"
+                >
+                  + Use a different address for this order
+                </button>
               </div>
+            ) : (
+              <>
+                {savedAddresses.length > 0 && (
+                  <button
+                    type="button"
+                    onClick={() => setUseNewAddress(false)}
+                    className="text-xs text-gray-500 hover:underline"
+                  >
+                    ← Back to saved addresses
+                  </button>
+                )}
+                <div>
+                  <label className="text-xs font-medium text-gray-600 dark:text-gray-400 mb-1 block">Address *</label>
+                  <textarea
+                    required
+                    rows={3}
+                    value={form.address}
+                    onChange={(e) => setForm((f) => ({ ...f, address: e.target.value }))}
+                    placeholder="House no., Street, Area, City…"
+                    className="w-full border border-gray-200 dark:border-gray-700 rounded-xl px-3 py-2.5 text-sm bg-white dark:bg-gray-900 text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-green-400 resize-none"
+                  />
+                </div>
+                <button
+                  type="button"
+                  onClick={useMyLocation}
+                  disabled={locating}
+                  className="w-full flex items-center justify-center gap-2 border border-green-300 text-green-700 font-semibold py-2.5 rounded-xl text-sm hover:bg-green-50 disabled:opacity-60 transition-colors"
+                >
+                  {locating ? (
+                    <Loader className="w-4 h-4 animate-spin" />
+                  ) : (
+                    <MapPin className="w-4 h-4" />
+                  )}
+                  {locating
+                    ? 'Getting location…'
+                    : location
+                    ? 'Location captured ✓'
+                    : radiusEnforced
+                    ? 'Use My Current Location *'
+                    : 'Use My Current Location'}
+                </button>
+                <button
+                  type="button"
+                  onClick={useAddressLocation}
+                  disabled={geocoding || !form.address.trim()}
+                  className="w-full flex items-center justify-center gap-2 text-xs font-semibold text-gray-500 hover:text-green-700 disabled:opacity-50 transition-colors"
+                >
+                  {geocoding && <Loader className="w-3.5 h-3.5 animate-spin" />}
+                  {geocoding ? 'Looking up address…' : 'Or check delivery availability using the address above'}
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setShowMapPicker(true)}
+                  className="w-full flex items-center justify-center gap-2 text-xs font-semibold text-gray-500 hover:text-green-700 transition-colors"
+                >
+                  <MapPin className="w-3.5 h-3.5" />
+                  Or pin your exact location on a map
+                </button>
+                {location && (
+                  <p className="text-xs text-gray-400 text-center">
+                    {location.lat.toFixed(5)}, {location.lng.toFixed(5)}
+                  </p>
+                )}
+                {matchedAddress && (
+                  <p className="text-xs text-gray-400 text-center">Matched to: {matchedAddress}</p>
+                )}
+                {radiusEnforced && !location && !distanceError && (
+                  <p className="text-xs text-gray-500 text-center">
+                    Location is required so we can confirm we deliver to your area.
+                  </p>
+                )}
+                {distanceError && (
+                  <div className="bg-red-50 border border-red-200 rounded-xl p-3 text-sm text-red-700 font-medium">
+                    {distanceError}
+                  </div>
+                )}
+              </>
             )}
           </div>
 
           {/* Order summary */}
-          <div className="bg-white rounded-2xl p-4 shadow-sm border border-gray-100">
-            <h2 className="font-semibold text-gray-900 mb-3">Order Summary</h2>
+          <div className="bg-white dark:bg-gray-800 rounded-2xl p-4 shadow-sm border border-gray-100 dark:border-gray-700">
+            <h2 className="font-semibold text-gray-900 dark:text-gray-100 mb-3">Order Summary</h2>
             <div className="space-y-2 text-sm">
               {items.map(({ vegetable, quantity }) => (
-                <div key={vegetable.id} className="flex justify-between text-gray-600">
+                <div key={vegetable.id} className="flex justify-between text-gray-600 dark:text-gray-300">
                   <span>{vegetable.name} × {quantity}</span>
                   <span>{formatPrice(vegetable.price * quantity)}</span>
                 </div>
               ))}
-              <div className="border-t border-gray-100 pt-2 flex justify-between font-bold text-gray-900">
+              <div className="border-t border-gray-100 dark:border-gray-700 pt-2 flex justify-between font-bold text-gray-900 dark:text-gray-100">
                 <span>Total</span>
-                <span className="text-green-600">{formatPrice(totalAmount)}</span>
+                <span className="text-green-600 dark:text-green-400">{formatPrice(totalAmount)}</span>
               </div>
             </div>
           </div>
 
-          <div className="fixed bottom-0 left-0 right-0 p-4 bg-white border-t border-gray-100 shadow-up">
+          <div className="fixed bottom-0 left-0 right-0 p-4 bg-white dark:bg-gray-800 border-t border-gray-100 dark:border-gray-700 shadow-up">
             <div className="max-w-xl mx-auto">
               <button
                 type="submit"
@@ -292,6 +381,20 @@ export default function CheckoutPage() {
           </div>
         </form>
       </div>
+
+      {showMapPicker && (
+        <Suspense fallback={null}>
+          <LocationPickerMap
+            initialLat={location?.lat ?? storeLat ?? undefined}
+            initialLng={location?.lng ?? storeLng ?? undefined}
+            onConfirm={(lat, lng) => {
+              applyLocation(lat, lng, 'address');
+              setShowMapPicker(false);
+            }}
+            onCancel={() => setShowMapPicker(false)}
+          />
+        </Suspense>
+      )}
     </div>
   );
 }
