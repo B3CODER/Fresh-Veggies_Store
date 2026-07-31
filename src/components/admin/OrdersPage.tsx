@@ -1,0 +1,184 @@
+import { useEffect, useState } from 'react';
+import { supabase } from '../../lib/supabase';
+import type { OrderWithItems } from '../../types/database';
+import { formatDate, formatPrice, generateOrderShortId, getOrderStatusColor, getOrderStatusLabel } from '../../lib/utils';
+import { OrderCardSkeleton } from '../shared/Skeletons';
+import { EmptyState } from '../shared/EmptyState';
+import { MapPin, Phone, ChevronDown, ChevronUp } from 'lucide-react';
+import toast from 'react-hot-toast';
+
+const STATUS_ACTIONS: Record<string, { label: string; next: string; color: string }[]> = {
+  pending: [
+    { label: 'Accept', next: 'accepted', color: 'bg-blue-500 hover:bg-blue-600 text-white' },
+    { label: 'Reject', next: 'rejected', color: 'bg-red-100 hover:bg-red-200 text-red-700' },
+  ],
+  accepted: [
+    { label: 'Start Preparing', next: 'preparing', color: 'bg-orange-500 hover:bg-orange-600 text-white' },
+    { label: 'Reject', next: 'rejected', color: 'bg-red-100 hover:bg-red-200 text-red-700' },
+  ],
+  preparing: [
+    { label: 'Mark Completed', next: 'completed', color: 'bg-green-500 hover:bg-green-600 text-white' },
+  ],
+  completed: [],
+  rejected: [],
+  cancelled: [],
+};
+
+export default function OrdersPage() {
+  const [orders, setOrders] = useState<OrderWithItems[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [expanded, setExpanded] = useState<string | null>(null);
+  const [filter, setFilter] = useState<string>('all');
+  const [updating, setUpdating] = useState<string | null>(null);
+
+  useEffect(() => {
+    loadOrders();
+
+    const channel = supabase
+      .channel('admin-orders')
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'orders' }, () => {
+        loadOrders();
+      })
+      .subscribe();
+
+    return () => { supabase.removeChannel(channel); };
+  }, []);
+
+  async function loadOrders() {
+    const { data, error } = await supabase
+      .from('orders')
+      .select('*, order_items(*)')
+      .order('created_at', { ascending: false });
+    if (error) { toast.error('Failed to load orders'); return; }
+    setOrders((data as OrderWithItems[]) ?? []);
+    setLoading(false);
+  }
+
+  async function updateStatus(orderId: string, status: string) {
+    setUpdating(orderId);
+    const { error } = await supabase.from('orders').update({ status }).eq('id', orderId);
+    if (error) toast.error('Failed to update status');
+    else toast.success(`Status updated to ${status}`);
+    setUpdating(null);
+    loadOrders();
+  }
+
+  const filters = ['all', 'pending', 'accepted', 'preparing', 'completed', 'rejected', 'cancelled'];
+  const filtered = filter === 'all' ? orders : orders.filter((o) => o.status === filter);
+
+  return (
+    <div className="space-y-5">
+      <h1 className="text-2xl font-bold text-gray-900">Orders</h1>
+
+      <div className="flex gap-2 overflow-x-auto pb-1 scrollbar-hide">
+        {filters.map((f) => (
+          <button
+            key={f}
+            onClick={() => setFilter(f)}
+            className={`flex-shrink-0 px-3 py-1.5 rounded-xl text-xs font-semibold capitalize transition-colors ${
+              filter === f ? 'bg-green-600 text-white' : 'bg-white text-gray-600 border border-gray-200 hover:bg-gray-50'
+            }`}
+          >
+            {f}
+          </button>
+        ))}
+      </div>
+
+      {loading ? (
+        <div className="space-y-3">
+          {Array.from({ length: 4 }).map((_, i) => <OrderCardSkeleton key={i} />)}
+        </div>
+      ) : filtered.length === 0 ? (
+        <EmptyState title="No orders found" description="Orders will appear here once customers place them." />
+      ) : (
+        <div className="space-y-3">
+          {filtered.map((order) => {
+            const isExpanded = expanded === order.id;
+            const actions = STATUS_ACTIONS[order.status] ?? [];
+            return (
+              <div key={order.id} className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
+                <div className="p-4">
+                  <div className="flex items-start justify-between mb-3">
+                    <div>
+                      <span className="font-mono text-xs text-gray-400">#{generateOrderShortId(order.id)}</span>
+                      <h3 className="font-semibold text-gray-900 mt-0.5">{order.customer_name}</h3>
+                    </div>
+                    <span className={`text-xs font-bold px-2 py-1 rounded-full ${getOrderStatusColor(order.status)}`}>
+                      {getOrderStatusLabel(order.status)}
+                    </span>
+                  </div>
+
+                  <div className="space-y-1.5 text-sm text-gray-600">
+                    <div className="flex items-center gap-2">
+                      <Phone className="w-3.5 h-3.5 text-gray-400 flex-shrink-0" />
+                      <a href={`tel:${order.customer_phone}`} className="hover:text-green-600">{order.customer_phone}</a>
+                    </div>
+                    <div className="flex items-start gap-2">
+                      <MapPin className="w-3.5 h-3.5 text-gray-400 flex-shrink-0 mt-0.5" />
+                      <span className="line-clamp-2">{order.delivery_address}</span>
+                    </div>
+                    {order.latitude && order.longitude && (
+                      <a
+                        href={`https://www.google.com/maps?q=${order.latitude},${order.longitude}`}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="flex items-center gap-1.5 text-xs text-blue-600 font-medium hover:underline"
+                      >
+                        <MapPin className="w-3 h-3" /> View on Google Maps
+                      </a>
+                    )}
+                  </div>
+
+                  <div className="flex items-center justify-between mt-3">
+                    <span className="font-bold text-gray-900">{formatPrice(order.total_amount)}</span>
+                    <span className="text-xs text-gray-400">{formatDate(order.created_at)}</span>
+                  </div>
+
+                  {actions.length > 0 && (
+                    <div className="flex gap-2 mt-3">
+                      {actions.map(({ label, next, color }) => (
+                        <button
+                          key={next}
+                          disabled={updating === order.id}
+                          onClick={() => updateStatus(order.id, next)}
+                          className={`flex-1 py-2 rounded-xl text-xs font-semibold transition-colors disabled:opacity-50 ${color}`}
+                        >
+                          {updating === order.id ? '…' : label}
+                        </button>
+                      ))}
+                    </div>
+                  )}
+                </div>
+
+                <button
+                  onClick={() => setExpanded(isExpanded ? null : order.id)}
+                  className="w-full flex items-center justify-between px-4 py-2 bg-gray-50 border-t border-gray-100 text-xs text-gray-500 font-medium hover:bg-gray-100 transition-colors"
+                >
+                  <span>View items ({order.order_items.length})</span>
+                  {isExpanded ? <ChevronUp className="w-4 h-4" /> : <ChevronDown className="w-4 h-4" />}
+                </button>
+
+                {isExpanded && (
+                  <div className="px-4 py-3 border-t border-gray-100 space-y-2">
+                    {order.order_items.map((item) => (
+                      <div key={item.id} className="flex justify-between text-sm">
+                        <span className="text-gray-700">
+                          {item.vegetable_name} × {item.quantity} {item.vegetable_unit}
+                        </span>
+                        <span className="font-semibold text-gray-900">{formatPrice(item.subtotal)}</span>
+                      </div>
+                    ))}
+                    <div className="border-t border-gray-100 pt-2 flex justify-between font-bold text-sm">
+                      <span>Total</span>
+                      <span>{formatPrice(order.total_amount)}</span>
+                    </div>
+                  </div>
+                )}
+              </div>
+            );
+          })}
+        </div>
+      )}
+    </div>
+  );
+}
