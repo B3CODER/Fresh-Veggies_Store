@@ -5,6 +5,7 @@ import { useCart } from '../../context/CartContext';
 import { useSettings } from '../../hooks/useSettings';
 import { useAuth } from '../../context/AuthContext';
 import { haversineDistanceKm, formatPrice } from '../../lib/utils';
+import { geocodeAddress } from '../../lib/geocode';
 import { ArrowLeft, MapPin, Loader } from 'lucide-react';
 import toast from 'react-hot-toast';
 
@@ -20,12 +21,39 @@ export default function CheckoutPage() {
   });
   const [location, setLocation] = useState<{ lat: number; lng: number } | null>(null);
   const [locating, setLocating] = useState(false);
+  const [geocoding, setGeocoding] = useState(false);
+  const [matchedAddress, setMatchedAddress] = useState('');
   const [distanceError, setDistanceError] = useState('');
   const [placing, setPlacing] = useState(false);
 
   if (items.length === 0) {
     navigate('/');
     return null;
+  }
+
+  const storeLat = settings?.latitude != null ? Number(settings.latitude) : null;
+  const storeLng = settings?.longitude != null ? Number(settings.longitude) : null;
+  const radiusKm = settings?.delivery_radius_km != null ? Number(settings.delivery_radius_km) : 5;
+  const radiusEnforced = !!settings?.enforce_delivery_radius && storeLat != null && storeLng != null;
+
+  function applyLocation(lat: number, lng: number, source: 'GPS' | 'address', displayName?: string) {
+    setLocation({ lat, lng });
+    setMatchedAddress(source === 'address' ? displayName ?? '' : '');
+
+    if (radiusEnforced && storeLat != null && storeLng != null) {
+      const dist = haversineDistanceKm(lat, lng, storeLat, storeLng);
+      if (dist > radiusKm) {
+        setDistanceError(
+          `Sorry, we are currently not serving your location. We deliver only within ${radiusKm} km (you are ${dist.toFixed(1)} km away).`,
+        );
+      } else {
+        setDistanceError('');
+        toast.success(`Location set! You are ${dist.toFixed(1)} km from the store.`);
+      }
+    } else {
+      setDistanceError('');
+      toast.success('Location captured!');
+    }
   }
 
   function useMyLocation() {
@@ -36,23 +64,7 @@ export default function CheckoutPage() {
     setLocating(true);
     navigator.geolocation.getCurrentPosition(
       (pos) => {
-        const { latitude: lat, longitude: lng } = pos.coords;
-        setLocation({ lat, lng });
-
-        if (settings?.latitude && settings.longitude) {
-          const dist = haversineDistanceKm(lat, lng, settings.latitude, settings.longitude);
-          const radius = settings.delivery_radius_km ?? 5;
-          if (dist > radius) {
-            setDistanceError(
-              `Sorry, we currently deliver only within ${radius} km. You are ${dist.toFixed(1)} km away.`,
-            );
-          } else {
-            setDistanceError('');
-            toast.success(`Location set! You are ${dist.toFixed(1)} km from the store.`);
-          }
-        } else {
-          toast.success('Location captured!');
-        }
+        applyLocation(pos.coords.latitude, pos.coords.longitude, 'GPS');
         setLocating(false);
       },
       () => {
@@ -62,15 +74,38 @@ export default function CheckoutPage() {
     );
   }
 
+  async function useAddressLocation() {
+    if (!form.address.trim()) {
+      toast.error('Please enter your address first.');
+      return;
+    }
+    setGeocoding(true);
+    try {
+      const result = await geocodeAddress(form.address);
+      if (!result) {
+        toast.error('Could not find that address. Add more detail, or use GPS location instead.');
+        return;
+      }
+      applyLocation(result.lat, result.lng, 'address', result.displayName);
+    } catch {
+      toast.error('Address lookup failed. Please try again or use GPS location.');
+    } finally {
+      setGeocoding(false);
+    }
+  }
+
   async function handlePlaceOrder(e: FormEvent) {
     e.preventDefault();
-    if (distanceError) { toast.error(distanceError); return; }
 
-    if (settings?.latitude && settings.longitude && !location) {
-      const confirmed = window.confirm(
-        'You have not provided your location. The store may not be able to verify delivery distance. Continue?',
-      );
-      if (!confirmed) return;
+    if (radiusEnforced) {
+      if (!location) {
+        toast.error('Please share your location so we can confirm we deliver to your area.');
+        return;
+      }
+      if (distanceError) {
+        toast.error(distanceError);
+        return;
+      }
     }
 
     setPlacing(true);
@@ -184,11 +219,34 @@ export default function CheckoutPage() {
               ) : (
                 <MapPin className="w-4 h-4" />
               )}
-              {locating ? 'Getting location…' : location ? 'Location captured ✓' : 'Use My Current Location'}
+              {locating
+                ? 'Getting location…'
+                : location
+                ? 'Location captured ✓'
+                : radiusEnforced
+                ? 'Use My Current Location *'
+                : 'Use My Current Location'}
+            </button>
+            <button
+              type="button"
+              onClick={useAddressLocation}
+              disabled={geocoding || !form.address.trim()}
+              className="w-full flex items-center justify-center gap-2 text-xs font-semibold text-gray-500 hover:text-green-700 disabled:opacity-50 transition-colors"
+            >
+              {geocoding && <Loader className="w-3.5 h-3.5 animate-spin" />}
+              {geocoding ? 'Looking up address…' : 'Or check delivery availability using the address above'}
             </button>
             {location && (
               <p className="text-xs text-gray-400 text-center">
                 {location.lat.toFixed(5)}, {location.lng.toFixed(5)}
+              </p>
+            )}
+            {matchedAddress && (
+              <p className="text-xs text-gray-400 text-center">Matched to: {matchedAddress}</p>
+            )}
+            {radiusEnforced && !location && !distanceError && (
+              <p className="text-xs text-gray-500 text-center">
+                Location is required so we can confirm we deliver to your area.
               </p>
             )}
             {distanceError && (
@@ -219,7 +277,7 @@ export default function CheckoutPage() {
             <div className="max-w-xl mx-auto">
               <button
                 type="submit"
-                disabled={placing || !!distanceError}
+                disabled={placing || (radiusEnforced && (!location || !!distanceError))}
                 className="w-full bg-green-600 hover:bg-green-700 disabled:opacity-60 active:scale-[0.99] text-white rounded-2xl py-3.5 font-semibold text-base transition-all shadow-lg"
               >
                 {placing ? 'Placing Order…' : `Place Order · ${formatPrice(totalAmount)}`}

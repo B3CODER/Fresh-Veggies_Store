@@ -45,6 +45,7 @@ export interface Settings {
   phone_number: string;
   whatsapp_number: string;
   delivery_radius_km: number;
+  enforce_delivery_radius: boolean;
   latitude: number | null;
   longitude: number | null;
   opening_time: string;
