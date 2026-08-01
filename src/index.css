@@ -9,7 +9,10 @@
 
   body {
     font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, sans-serif;
-    @apply text-gray-900 antialiased;
+    @apply text-gray-900 dark:text-gray-100 bg-gray-50 dark:bg-gray-900 antialiased;
+    /* Guard against sideways scroll on mobile. `clip` rather than `hidden`:
+       hidden makes body a scroll container, which breaks the sticky headers. */
+    overflow-x: clip;
   }
 
   input[type='number']::-webkit-inner-spin-button,

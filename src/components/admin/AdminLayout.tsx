@@ -168,7 +168,9 @@ export default function AdminLayout({ children }: AdminLayoutProps) {
       )}
 
       {/* Main content */}
-      <main className="flex-1 md:ml-56 pt-14 md:pt-0 min-h-screen">
+      {/* min-w-0: without it this flex child won't shrink below its content
+          width, so a long address pushes the whole page sideways on mobile. */}
+      <main className="flex-1 min-w-0 md:ml-56 pt-14 md:pt-0 min-h-screen">
         <div className="p-4 md:p-6 max-w-5xl mx-auto">{children}</div>
       </main>
     </div>

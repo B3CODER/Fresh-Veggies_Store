@@ -431,26 +431,26 @@ export default function AccountPage() {
                 const canCancel = order.status === 'pending' || order.status === 'rejected';
                 return (
                   <div key={order.id} className="bg-white dark:bg-gray-800 rounded-2xl p-4 shadow-sm border border-gray-100 dark:border-gray-700">
-                    <div className="flex items-start justify-between mb-2">
-                      <div>
+                    <div className="flex items-start justify-between gap-2 mb-2">
+                      <div className="min-w-0">
                         <span className="font-mono text-xs text-gray-400 dark:text-gray-500">#{generateOrderShortId(order.id)}</span>
                         <p className="text-xs text-gray-400 dark:text-gray-500 mt-0.5">{formatDate(order.created_at)}</p>
                       </div>
-                      <span className={`text-xs font-bold px-2 py-1 rounded-full ${getOrderStatusColor(order.status)}`}>
+                      <span className={`text-xs font-bold px-2 py-1 rounded-full flex-shrink-0 ${getOrderStatusColor(order.status)}`}>
                         {getOrderStatusLabel(order.status)}
                       </span>
                     </div>
                     <div className="space-y-1 mb-3">
                       {order.order_items.map((item) => (
-                        <div key={item.id} className="flex justify-between text-sm">
-                          <span className="text-gray-600 dark:text-gray-300">
+                        <div key={item.id} className="flex justify-between gap-2 text-sm">
+                          <span className="text-gray-600 dark:text-gray-300 min-w-0 break-words">
                             {item.vegetable_name} × {item.quantity} {item.vegetable_unit}
                           </span>
-                          <span className="text-gray-500 dark:text-gray-400">{formatPrice(item.subtotal)}</span>
+                          <span className="text-gray-500 dark:text-gray-400 flex-shrink-0">{formatPrice(item.subtotal)}</span>
                         </div>
                       ))}
                     </div>
-                    <div className="flex items-center justify-between border-t border-gray-100 dark:border-gray-700 pt-2">
+                    <div className="flex items-center justify-between gap-2 flex-wrap border-t border-gray-100 dark:border-gray-700 pt-2">
                       <span className="font-bold text-gray-900 dark:text-gray-100">{formatPrice(order.total_amount)}</span>
                       <div className="flex gap-2">
                         <button

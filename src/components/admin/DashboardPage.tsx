@@ -90,12 +90,12 @@ export default function DashboardPage() {
         ) : (
           <div className="divide-y divide-gray-50 dark:divide-gray-700">
             {recentOrders.map((order) => (
-              <div key={order.id} className="flex items-center justify-between px-4 py-3">
-                <div>
-                  <p className="text-sm font-medium text-gray-900 dark:text-gray-100">{order.customer_name}</p>
+              <div key={order.id} className="flex items-center justify-between gap-2 px-4 py-3">
+                <div className="min-w-0">
+                  <p className="text-sm font-medium text-gray-900 dark:text-gray-100 break-words">{order.customer_name}</p>
                   <p className="text-xs text-gray-400 dark:text-gray-500">{formatDate(order.created_at)}</p>
                 </div>
-                <div className="text-right space-y-1">
+                <div className="text-right space-y-1 flex-shrink-0">
                   <p className="text-sm font-semibold text-gray-900 dark:text-gray-100">
                     {formatPrice(order.total_amount)}
                   </p>

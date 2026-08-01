@@ -107,12 +107,12 @@ export default function OrdersPage() {
             return (
               <div key={order.id} className="bg-white dark:bg-gray-800 rounded-2xl shadow-sm border border-gray-100 dark:border-gray-700 overflow-hidden">
                 <div className="p-4">
-                  <div className="flex items-start justify-between mb-3">
-                    <div>
+                  <div className="flex items-start justify-between gap-2 mb-3">
+                    <div className="min-w-0">
                       <span className="font-mono text-xs text-gray-400 dark:text-gray-500">#{generateOrderShortId(order.id)}</span>
-                      <h3 className="font-semibold text-gray-900 dark:text-gray-100 mt-0.5">{order.customer_name}</h3>
+                      <h3 className="font-semibold text-gray-900 dark:text-gray-100 mt-0.5 break-words">{order.customer_name}</h3>
                     </div>
-                    <span className={`text-xs font-bold px-2 py-1 rounded-full ${getOrderStatusColor(order.status)}`}>
+                    <span className={`text-xs font-bold px-2 py-1 rounded-full flex-shrink-0 ${getOrderStatusColor(order.status)}`}>
                       {getOrderStatusLabel(order.status)}
                     </span>
                   </div>
@@ -120,11 +120,11 @@ export default function OrdersPage() {
                   <div className="space-y-1.5 text-sm text-gray-600 dark:text-gray-300">
                     <div className="flex items-center gap-2">
                       <Phone className="w-3.5 h-3.5 text-gray-400 dark:text-gray-500 flex-shrink-0" />
-                      <a href={`tel:${order.customer_phone}`} className="hover:text-green-600 dark:hover:text-green-400">{order.customer_phone}</a>
+                      <a href={`tel:${order.customer_phone}`} className="hover:text-green-600 dark:hover:text-green-400 break-all">{order.customer_phone}</a>
                     </div>
                     <div className="flex items-start gap-2">
                       <MapPin className="w-3.5 h-3.5 text-gray-400 dark:text-gray-500 flex-shrink-0 mt-0.5" />
-                      <span className="line-clamp-2">{order.delivery_address}</span>
+                      <span className="line-clamp-2 min-w-0 break-words">{order.delivery_address}</span>
                     </div>
                     {order.latitude && order.longitude && (
                       <a
@@ -138,7 +138,7 @@ export default function OrdersPage() {
                     )}
                   </div>
 
-                  <div className="flex items-center justify-between mt-3">
+                  <div className="flex items-center justify-between gap-2 flex-wrap mt-3">
                     <span className="font-bold text-gray-900 dark:text-gray-100">{formatPrice(order.total_amount)}</span>
                     <span className="text-xs text-gray-400 dark:text-gray-500">{formatDate(order.created_at)}</span>
                   </div>
@@ -170,11 +170,11 @@ export default function OrdersPage() {
                 {isExpanded && (
                   <div className="px-4 py-3 border-t border-gray-100 dark:border-gray-700 space-y-2">
                     {order.order_items.map((item) => (
-                      <div key={item.id} className="flex justify-between text-sm">
-                        <span className="text-gray-700 dark:text-gray-300">
+                      <div key={item.id} className="flex justify-between gap-2 text-sm">
+                        <span className="text-gray-700 dark:text-gray-300 min-w-0 break-words">
                           {item.vegetable_name} × {item.quantity} {item.vegetable_unit}
                         </span>
-                        <span className="font-semibold text-gray-900 dark:text-gray-100">{formatPrice(item.subtotal)}</span>
+                        <span className="font-semibold text-gray-900 dark:text-gray-100 flex-shrink-0">{formatPrice(item.subtotal)}</span>
                       </div>
                     ))}
                     <div className="border-t border-gray-100 dark:border-gray-700 pt-2 flex justify-between font-bold text-sm text-gray-900 dark:text-gray-100">

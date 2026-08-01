@@ -196,11 +196,11 @@ export default function OrderStatusPage() {
           <h2 className="font-semibold text-gray-900 dark:text-gray-100 mb-3">Your Items</h2>
           <div className="space-y-2">
             {order.order_items.map((item) => (
-              <div key={item.id} className="flex justify-between text-sm">
-                <span className="text-gray-600 dark:text-gray-300">
+              <div key={item.id} className="flex justify-between gap-2 text-sm">
+                <span className="text-gray-600 dark:text-gray-300 min-w-0 break-words">
                   {item.vegetable_name} × {item.quantity} {item.vegetable_unit}
                 </span>
-                <span className="font-semibold text-gray-900 dark:text-gray-100">{formatPrice(item.subtotal)}</span>
+                <span className="font-semibold text-gray-900 dark:text-gray-100 flex-shrink-0">{formatPrice(item.subtotal)}</span>
               </div>
             ))}
             <div className="border-t border-gray-100 dark:border-gray-700 pt-2 flex justify-between font-bold">
@@ -213,7 +213,7 @@ export default function OrderStatusPage() {
         {/* Customer info */}
         <div className="bg-white dark:bg-gray-800 rounded-2xl p-4 shadow-sm border border-gray-100 dark:border-gray-700">
           <h2 className="font-semibold text-gray-900 dark:text-gray-100 mb-3">Delivery Details</h2>
-          <div className="space-y-1 text-sm text-gray-600 dark:text-gray-300">
+          <div className="space-y-1 text-sm text-gray-600 dark:text-gray-300 break-words">
             <p><span className="font-medium text-gray-900 dark:text-gray-100">Name:</span> {order.customer_name}</p>
             <p><span className="font-medium text-gray-900 dark:text-gray-100">Phone:</span> {order.customer_phone}</p>
             <p><span className="font-medium text-gray-900 dark:text-gray-100">Address:</span> {order.delivery_address}</p>

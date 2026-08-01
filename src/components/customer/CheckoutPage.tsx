@@ -302,9 +302,9 @@ export default function CheckoutPage() {
             <h2 className="font-semibold text-gray-900 dark:text-gray-100 mb-3">Order Summary</h2>
             <div className="space-y-2 text-sm">
               {items.map(({ vegetable, quantity }) => (
-                <div key={vegetable.id} className="flex justify-between text-gray-600 dark:text-gray-300">
-                  <span>{vegetable.name} × {quantity}</span>
-                  <span>{formatPrice(vegetable.price * quantity)}</span>
+                <div key={vegetable.id} className="flex justify-between gap-2 text-gray-600 dark:text-gray-300">
+                  <span className="min-w-0 break-words">{vegetable.name} × {quantity}</span>
+                  <span className="flex-shrink-0">{formatPrice(vegetable.price * quantity)}</span>
                 </div>
               ))}
               <div className="border-t border-gray-100 dark:border-gray-700 pt-2 flex justify-between font-bold text-gray-900 dark:text-gray-100">
